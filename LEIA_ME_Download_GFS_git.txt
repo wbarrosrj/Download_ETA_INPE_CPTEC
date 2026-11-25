@@ -1,0 +1,96 @@
+============================================================
+BAIXAR VENTO ETA 1KM (CPTEC) — 2025
+============================================================
+
+O que faz
+---------
+Baixa u10m e v10m do modelo Eta 1km (CPTEC) para 2025 e salva em um
+NetCDF na mesma grade do ERA5 (13x13 pontos, lat -21.5 a -24.5,
+lon -44.5 a -41.5, passo 0.25 graus).
+
+A saída tem dimensões (time, latitude, longitude) e variáveis u10m
+e v10m, no mesmo formato do VENTO.nc do ERA5.
+
+
+Requisitos
+----------
+Python 3.9 ou mais novo, com:
+
+    pip install xarray cfgrib eccodes requests tqdm pandas numpy
+
+O cfgrib precisa da biblioteca eccodes instalada no sistema. No
+Ubuntu/Debian:
+
+    sudo apt install libeccodes-dev
+
+No conda:
+
+    conda install -c conda-forge eccodes
+
+
+Antes de rodar
+--------------
+Abra o script e edite a seção CONFIG, no topo do arquivo. O único
+campo obrigatório é PASTA_SAIDA:
+
+    PASTA_SAIDA = "/caminho/da/sua/pasta/vento_eta_2025"
+
+Coloque o caminho de uma pasta onde você tenha espaço em disco e
+permissão de escrita. A pasta é criada automaticamente se não
+existir.
+
+Os demais campos (período, grade, URL, tempos de espera) já vêm
+prontos e normalmente não precisam ser alterados.
+
+
+Como rodar
+----------
+    python baixar_vento_eta_2025.py
+
+O download é demorado (um arquivo por hora do ano). O script salva
+um checkpoint a cada 24 horas processadas, então se você parar no
+meio é só rodar de novo: ele continua de onde parou.
+
+No final, o resultado fica em:
+
+    <PASTA_SAIDA>/vento_eta_2025_grade_era5.nc
+
+
+Arquivos gerados na PASTA_SAIDA
+-------------------------------
+- temp_eta.grb
+  Arquivo temporário do download em andamento. É apagado após o
+  processamento de cada hora.
+
+- checkpoint_vento_eta_grade.pkl
+  Estado do download. Não apague se quiser retomar de onde parou.
+
+- vento_eta_2025_grade_era5.nc
+  Resultado final.
+
+
+Problemas comuns
+----------------
+- "eccodes not found" ao abrir o .grb:
+  Falta a biblioteca eccodes no sistema. Veja a seção Requisitos.
+
+- Muitos erros de download seguidos:
+  O servidor do CPTEC pode estar fora do ar ou lento. O script
+  tenta 3 vezes por hora e segue em frente, gravando NaN nos
+  pontos que falharem. Você pode rodar de novo depois para
+  preencher as falhas: basta apagar as entradas com NaN do
+  checkpoint ou remover o checkpoint e baixar tudo de novo.
+
+- Download muito lento:
+  Aumente PAUSA_ENTRE_DOWNLOADS no CONFIG, ou rode em um horário
+  com menos carga no servidor.
+
+
+O que NÃO é feito aqui
+-----------------------
+- Não há filtro por terra/mar. O campo cobre terra e mar igual,
+  como no ERA5. O tratamento da máscara fica para o SHYFEM/nc2fem.
+
+- Não há média espacial. Cada ponto da grade é amostrado
+  individualmente pelo vizinho mais próximo dentro da grade
+  nativa do Eta 1km.
